@@ -1,4 +1,4 @@
-cls
+п»їcls
 
 $workdir = 'T:\!!!_PowerShell_scripts\MyWiki\IT'
 
@@ -33,7 +33,7 @@ foreach($node in $nodes)
         if(-not $node2id[$link])
         {
             $warn_count++
-            Write-Host "ПРЕДУПРЕЖДЕНИЕ: ссылка на несуществующую страницу: $link"
+            Write-Host "РџР Р•Р”РЈРџР Р•Р–Р”Р•РќРР•: СЃСЃС‹Р»РєР° РЅР° РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ СЃС‚СЂР°РЅРёС†Сѓ: $link"
             continue
         }
 
@@ -57,11 +57,11 @@ foreach($Aid in $neibs.Keys)
         {
             $Aname = ($node2id.GetEnumerator() | Where-Object {$_.value -eq $Aid}).Name
             $Bname = ($node2id.GetEnumerator() | Where-Object {$_.value -eq $Bid}).Name
-            Write-Host "ОШИБКА: отсутствует ссылка: $Bname -> $Aname"
+            Write-Host "РћРЁРР‘РљРђ: РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ СЃСЃС‹Р»РєР°: $Bname -> $Aname"
             $kosyak_count++
         }
     }
 }
 
-Write-Host "Ошибки: $kosyak_count"
-Write-Host "Предупреждения: $warn_count"
+Write-Host "РћС€РёР±РєРё: $kosyak_count"
+Write-Host "РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ: $warn_count"
