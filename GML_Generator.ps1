@@ -1,10 +1,6 @@
 ﻿cls
 
-$workdir = 'T:\!!!_PowerShell_scripts\MyWiki\IT'
-#$workdir = 'T:\!!!_PowerShell_scripts\MyWiki\psy'
-
-$outfile = 'T:\!!!_PowerShell_scripts\MyWiki\out_IT.gml'
-#$outfile = 'T:\!!!_PowerShell_scripts\MyWiki\out_psy.gml'
+Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
 $clneibs = @{}
 
@@ -28,7 +24,7 @@ function Run-MFBWalker ($startnode, $maxsteps)
 
 [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | Out-Null
 
-$nodes = Get-ChildItem -LiteralPath $workdir -Recurse '*.dcmp2'
+$nodes = Get-ChildItem -LiteralPath $input_dir -Recurse '*.dcmp2'
 #$nodes
 
 $curr_id = 1
@@ -113,8 +109,8 @@ $gml_str += (-join $gml_str_children)
 $gml_str += (-join $gml_str_neibs)
 $gml_str += "]`r`n"
 
-$gml_str | Out-File -FilePath $outfile -Encoding default
+$gml_str | Out-File -FilePath $out_gml -Encoding default
 
 $stat | Out-GridView
 
-Run-MFBWalker '!!!!!_start' 1000000
+#Run-MFBWalker '!!!!!_start' 1000000
