@@ -2,6 +2,7 @@
 
 $workfilearg = $script:args
 
+Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
 function GoToPage ($fname)
 {
@@ -31,6 +32,9 @@ function GenerateForm {
 
 #region Generated Form Objects
 $form1 = New-Object System.Windows.Forms.Form
+$GitPushButton = New-Object System.Windows.Forms.Button
+$GitPullButton = New-Object System.Windows.Forms.Button
+$GitStatusButton = New-Object System.Windows.Forms.Button
 $FormatClearButton = New-Object System.Windows.Forms.Button
 $FormatBlueButton = New-Object System.Windows.Forms.Button
 $FormatGreenButton = New-Object System.Windows.Forms.Button
@@ -53,6 +57,44 @@ $InitialFormWindowState = New-Object System.Windows.Forms.FormWindowState
 #Generated Event Script Blocks
 #----------------------------------------------
 #Provide Custom Code for events specified in PrimalForms.
+$GitStatusButton_OnClick= 
+{
+    Write-Host '----- Git status --------------------------------------------------'
+    Start-Process -FilePath $script:path2git -ArgumentList 'status' -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+    Write-Host '-------------------------------------------------------------------'
+}
+
+$GitPullButton_OnClick= 
+{
+    Write-Host '----- Git PULL ----------------------------------------------------'
+    Start-Process -FilePath $script:path2git -ArgumentList 'pull' -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+    Write-Host '-------------------------------------------------------------------'
+}
+
+$GitPushButton_OnClick= 
+{
+    [void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
+    $commit_message = [Microsoft.VisualBasic.Interaction]::InputBox("Введите комментарий к коммиту", "Коммит")
+
+    Write-Host '----- Add, commit & push ------------------------------------------'
+    Write-Host ">> git add -A`n`n"
+
+    Start-Process -FilePath $script:path2git -ArgumentList 'add -A' -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+    Start-Sleep -Seconds 3
+
+    Write-Host ">> git commit -m `"$commit_message`"`n`n"
+
+    Start-Process -FilePath $script:path2git -ArgumentList "commit -m `"$commit_message`"" -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+    Start-Sleep -Seconds 3
+
+    Write-Host ">> git push`n`n"
+
+    Start-Process -FilePath $script:path2git -ArgumentList 'push' -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+    Start-Sleep -Seconds 3
+
+    Write-Host '-------------------------------------------------------------------'
+}
+
 $FormatRedButton_OnClick= 
 {
     $richTextBox1.SelectionColor = [System.Drawing.Color]::FromArgb(255,255,0,0)
@@ -219,6 +261,63 @@ $form1.ClientSize = $System_Drawing_Size
 $form1.DataBindings.DefaultDataSourceUpdateMode = 0
 $form1.Name = "form1"
 $form1.Text = "Primal Form"
+
+
+$GitPushButton.DataBindings.DefaultDataSourceUpdateMode = 0
+
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 641
+$System_Drawing_Point.Y = 341
+$GitPushButton.Location = $System_Drawing_Point
+$GitPushButton.Name = "GitPushButton"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 23
+$System_Drawing_Size.Width = 109
+$GitPushButton.Size = $System_Drawing_Size
+$GitPushButton.TabIndex = 17
+$GitPushButton.Text = "Git push"
+$GitPushButton.UseVisualStyleBackColor = $True
+$GitPushButton.add_Click($GitPushButton_OnClick)
+
+$form1.Controls.Add($GitPushButton)
+
+
+$GitPullButton.DataBindings.DefaultDataSourceUpdateMode = 0
+
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 641
+$System_Drawing_Point.Y = 311
+$GitPullButton.Location = $System_Drawing_Point
+$GitPullButton.Name = "GitPullButton"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 23
+$System_Drawing_Size.Width = 109
+$GitPullButton.Size = $System_Drawing_Size
+$GitPullButton.TabIndex = 16
+$GitPullButton.Text = "Git pull"
+$GitPullButton.UseVisualStyleBackColor = $True
+$GitPullButton.add_Click($GitPullButton_OnClick)
+
+$form1.Controls.Add($GitPullButton)
+
+
+$GitStatusButton.DataBindings.DefaultDataSourceUpdateMode = 0
+
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 641
+$System_Drawing_Point.Y = 281
+$GitStatusButton.Location = $System_Drawing_Point
+$GitStatusButton.Name = "GitStatusButton"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 23
+$System_Drawing_Size.Width = 109
+$GitStatusButton.Size = $System_Drawing_Size
+$GitStatusButton.TabIndex = 15
+$GitStatusButton.Text = "Git status"
+$GitStatusButton.UseVisualStyleBackColor = $True
+$GitStatusButton.add_Click($GitStatusButton_OnClick)
+
+$form1.Controls.Add($GitStatusButton)
 
 
 $FormatClearButton.DataBindings.DefaultDataSourceUpdateMode = 0
