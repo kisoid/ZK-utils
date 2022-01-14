@@ -1,0 +1,14 @@
+﻿# полный путь к директории с файлами базы знаний (*.dcmp2)
+# используется в Consistency_Checker.ps1 и GML_Generator.ps1
+
+$input_dir = 'T:\!!!_PowerShell_scripts\MyWiki\IT'
+
+# полный путь к выходному файлу в формате GML (Graph Modeling Language)
+# используется в GML_Generator.ps1
+
+$out_gml = 'T:\!!!_PowerShell_scripts\MyWiki\out_IT.gml'
+
+# полный путь к исполняемому файлу Git
+# используется в mw_main.ps1 (опционально)
+
+$path2git = 'C:\PortableGit\cmd\git.exe'
