@@ -1,10 +1,10 @@
 ﻿cls
 
-$workdir = 'T:\!!!_PowerShell_scripts\MyWiki\IT'
+Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
 [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | Out-Null
 
-$nodes = Get-ChildItem -LiteralPath $workdir -Recurse '*.dcmp2'
+$nodes = Get-ChildItem -LiteralPath $input_dir -Recurse '*.dcmp2'
 #$nodes
 
 $curr_id = 1
