@@ -32,6 +32,7 @@ function GenerateForm {
 
 #region Generated Form Objects
 $form1 = New-Object System.Windows.Forms.Form
+$ConsistencyCheckerButton = New-Object System.Windows.Forms.Button
 $GitPushButton = New-Object System.Windows.Forms.Button
 $GitPullButton = New-Object System.Windows.Forms.Button
 $GitStatusButton = New-Object System.Windows.Forms.Button
@@ -57,6 +58,13 @@ $InitialFormWindowState = New-Object System.Windows.Forms.FormWindowState
 #Generated Event Script Blocks
 #----------------------------------------------
 #Provide Custom Code for events specified in PrimalForms.
+$ConsistencyCheckerButton_OnClick= 
+{
+    Write-Host '----- Consistency Check -------------------------------------------'
+    & "$PSScriptRoot\Consistency_Checker.ps1" "$($script:workdirectory)"
+    Write-Host '-------------------------------------------------------------------'
+}
+
 $GitStatusButton_OnClick= 
 {
     Write-Host '----- Git status --------------------------------------------------'
@@ -261,6 +269,25 @@ $form1.ClientSize = $System_Drawing_Size
 $form1.DataBindings.DefaultDataSourceUpdateMode = 0
 $form1.Name = "form1"
 $form1.Text = "Primal Form"
+
+
+$ConsistencyCheckerButton.DataBindings.DefaultDataSourceUpdateMode = 0
+
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 641
+$System_Drawing_Point.Y = 402
+$ConsistencyCheckerButton.Location = $System_Drawing_Point
+$ConsistencyCheckerButton.Name = "ConsistencyCheckerButton"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 23
+$System_Drawing_Size.Width = 109
+$ConsistencyCheckerButton.Size = $System_Drawing_Size
+$ConsistencyCheckerButton.TabIndex = 18
+$ConsistencyCheckerButton.Text = "Consistency check"
+$ConsistencyCheckerButton.UseVisualStyleBackColor = $True
+$ConsistencyCheckerButton.add_Click($ConsistencyCheckerButton_OnClick)
+
+$form1.Controls.Add($ConsistencyCheckerButton)
 
 
 $GitPushButton.DataBindings.DefaultDataSourceUpdateMode = 0

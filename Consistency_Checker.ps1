@@ -1,6 +1,9 @@
-﻿cls
+﻿#cls
 
-Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
+Write-Host $args[0]
+
+#Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
+$input_dir = $args[0]
 
 [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | Out-Null
 
@@ -44,7 +47,7 @@ foreach($node in $nodes)
 }
 
 #$neibs.GetEnumerator() | Out-GridView
-$neibs.Count
+write-host "Количество узлов: " $neibs.Count
 
 $kosyak_count = 0
 
