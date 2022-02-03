@@ -17,6 +17,31 @@ function GoToPage ($fname)
 }
 
 
+function Search-Word ($request)
+{
+    $result = New-Object System.Collections.Generic.List[System.Object]
+
+    $nodes = Get-ChildItem -LiteralPath $script:workdirectory -Recurse '*.dcmp2'
+
+    $tmp_richTextBox = New-Object System.Windows.Forms.RichTextBox
+
+    foreach($node in $nodes)
+    {
+        $tmp_richTextBox.LoadFile($node.FullName)
+        $matchstrings = ($tmp_richTextBox.Lines | Where-Object {$_ -like "*$($request)*"})
+
+        foreach($mstr in $matchstrings)
+        {
+            $result.Add([pscustomobject]@{
+            'Node' = $node.BaseName
+            'Line' = $mstr
+            })
+        }
+    }
+
+    return $result
+}
+
 #Generated Form Function
 function GenerateForm {
 ########################################################################
@@ -144,25 +169,7 @@ $SearchButton_OnClick=
     [void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
     $request = [Microsoft.VisualBasic.Interaction]::InputBox("Введите искомое слово/фрагмент", "Поиск")
 
-    $searchresults = New-Object System.Collections.Generic.List[System.Object]
-
-    $nodes = Get-ChildItem -LiteralPath $script:workdirectory -Recurse '*.dcmp2'
-
-    $tmp_richTextBox = New-Object System.Windows.Forms.RichTextBox
-
-    foreach($node in $nodes)
-    {
-        $tmp_richTextBox.LoadFile($node.FullName)
-        $matchstrings = ($tmp_richTextBox.Lines | Where-Object {$_ -like "*$($request)*"})
-
-        foreach($mstr in $matchstrings)
-        {
-            $searchresults.Add([pscustomobject]@{
-            'Node' = $node.BaseName
-            'Line' = $mstr
-            })
-        }
-    }
+    $searchresults = (Search-Word $request)
 
     $searchresults | Out-GridView
 }
@@ -199,6 +206,16 @@ $GoToPageButton_OnClick=
 {
     #GoTo
     $links = ($richTextBox1.Lines | Where-Object {$_ -like '*linkto:*'} | ForEach-Object {$_.Split(':')[1]})
+    $links2 = @()
+
+    $word2links = ($richTextBox1.Lines | Where-Object {$_ -like '*word2links:*'} | ForEach-Object {$_.Split(':')[1]})
+
+    foreach($word2link in $word2links)
+    {
+        $links2 += (Search-Word $word2link).Node
+    }
+
+    $links = @() + $links + ($links2 | Sort-Object | Get-Unique)
 
     if($links.Count -eq 0)
     {
