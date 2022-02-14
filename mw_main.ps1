@@ -4,6 +4,38 @@ $workfilearg = $script:args
 
 Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
+function Add-Node ($RootNode,$NodeName)
+{
+    $newNode = new-object System.Windows.Forms.TreeNode
+    $newNode.Name = $NodeName
+    $newNode.Text = $NodeName
+    $newNode.Tag = $NodeName
+    $Null = $RootNode.Nodes.Add($newNode)
+    return $newNode
+}
+
+
+function Get-NeighborLinks ($node)
+{
+    $tmp_richTextBox = New-Object System.Windows.Forms.RichTextBox
+    $tmp_richTextBox.LoadFile("$($script:workdirectory)\$($node).dcmp2")
+    
+    $links = ($tmp_richTextBox.Lines | Where-Object {$_ -like '*linkto:*'} | ForEach-Object {$_.Split(':')[1]})
+    $links2 = @()
+    
+    $word2links = ($tmp_richTextBox.Lines | Where-Object {$_ -like '*word2links:*'} | ForEach-Object {$_.Split(':')[1]})
+    
+    foreach($word2link in $word2links)
+    {
+        $links2 += (Search-Word $word2link).Node
+    }
+    
+    $links = @() + $links + ($links2 | Sort-Object | Get-Unique)
+
+    return $links
+}
+
+
 function GoToPage ($fname)
 {
     $script:workfile = Get-ChildItem -LiteralPath $fname
@@ -14,6 +46,9 @@ function GoToPage ($fname)
     $form1.Text = "MyWiki - $($script:workfilefullname)"
     $richTextBox1.LoadFile($script:workfilefullname)
     $label1.Text = ""
+
+    $treeView1.Nodes.Clear()
+    Add-Node $treeView1 $script:workfilebasename | Out-Null
 }
 
 
@@ -57,6 +92,7 @@ function GenerateForm {
 
 #region Generated Form Objects
 $form1 = New-Object System.Windows.Forms.Form
+$treeView1 = New-Object System.Windows.Forms.TreeView
 $ConsistencyCheckerButton = New-Object System.Windows.Forms.Button
 $GitPushButton = New-Object System.Windows.Forms.Button
 $GitPullButton = New-Object System.Windows.Forms.Button
@@ -83,6 +119,23 @@ $InitialFormWindowState = New-Object System.Windows.Forms.FormWindowState
 #Generated Event Script Blocks
 #----------------------------------------------
 #Provide Custom Code for events specified in PrimalForms.
+$handler_treeView1_AfterSelect= 
+{
+    $links = (Get-NeighborLinks $_.Node.Name)
+
+    $_.Node.Nodes.Clear()
+
+    foreach($link in $links)
+    {
+        Add-Node $_.Node $link
+    }
+}
+
+$handler_treeView1_AfterExpand= 
+{
+    #Write-Host "EXPAND!" $_.Node.Name
+}
+
 $ConsistencyCheckerButton_OnClick= 
 {
     Write-Host '----- Consistency Check -------------------------------------------'
@@ -205,17 +258,8 @@ $FormatBoldButton_OnClick=
 $GoToPageButton_OnClick= 
 {
     #GoTo
-    $links = ($richTextBox1.Lines | Where-Object {$_ -like '*linkto:*'} | ForEach-Object {$_.Split(':')[1]})
-    $links2 = @()
-
-    $word2links = ($richTextBox1.Lines | Where-Object {$_ -like '*word2links:*'} | ForEach-Object {$_.Split(':')[1]})
-
-    foreach($word2link in $word2links)
-    {
-        $links2 += (Search-Word $word2link).Node
-    }
-
-    $links = @() + $links + ($links2 | Sort-Object | Get-Unique)
+    <#
+    $links = (Get-NeighborLinks $script:workfilebasename)
 
     if($links.Count -eq 0)
     {
@@ -224,6 +268,14 @@ $GoToPageButton_OnClick=
     }
 
     $selected_link = ($links | Out-GridView -OutputMode Single)
+    #>
+    $selected_link = $treeView1.SelectedNode.Name
+
+    if(-not $selected_link)
+    {
+        Write-Host "No link selected"
+        return
+    }
 
     $prev = $script:workfilebasename
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
@@ -281,17 +333,34 @@ $OnLoadForm_StateCorrection=
 #region Generated Form Code
 $System_Drawing_Size = New-Object System.Drawing.Size
 $System_Drawing_Size.Height = 762
-$System_Drawing_Size.Width = 758
+$System_Drawing_Size.Width = 1192
 $form1.ClientSize = $System_Drawing_Size
 $form1.DataBindings.DefaultDataSourceUpdateMode = 0
 $form1.Name = "form1"
 $form1.Text = "Primal Form"
 
 
+$treeView1.DataBindings.DefaultDataSourceUpdateMode = 0
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 13
+$System_Drawing_Point.Y = 43
+$treeView1.Location = $System_Drawing_Point
+$treeView1.Name = "treeView1"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 680
+$System_Drawing_Size.Width = 424
+$treeView1.Size = $System_Drawing_Size
+$treeView1.TabIndex = 19
+$treeView1.add_AfterSelect($handler_treeView1_AfterSelect)
+$treeView1.add_AfterExpand($handler_treeView1_AfterExpand)
+
+$form1.Controls.Add($treeView1)
+
+
 $ConsistencyCheckerButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 402
 $ConsistencyCheckerButton.Location = $System_Drawing_Point
 $ConsistencyCheckerButton.Name = "ConsistencyCheckerButton"
@@ -310,7 +379,7 @@ $form1.Controls.Add($ConsistencyCheckerButton)
 $GitPushButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 341
 $GitPushButton.Location = $System_Drawing_Point
 $GitPushButton.Name = "GitPushButton"
@@ -329,7 +398,7 @@ $form1.Controls.Add($GitPushButton)
 $GitPullButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 311
 $GitPullButton.Location = $System_Drawing_Point
 $GitPullButton.Name = "GitPullButton"
@@ -348,7 +417,7 @@ $form1.Controls.Add($GitPullButton)
 $GitStatusButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 281
 $GitStatusButton.Location = $System_Drawing_Point
 $GitStatusButton.Name = "GitStatusButton"
@@ -367,7 +436,7 @@ $form1.Controls.Add($GitStatusButton)
 $FormatClearButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 255
+$System_Drawing_Point.X = 685
 $System_Drawing_Point.Y = 13
 $FormatClearButton.Location = $System_Drawing_Point
 $FormatClearButton.Name = "FormatClearButton"
@@ -388,7 +457,7 @@ $FormatBlueButton.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8
 $FormatBlueButton.ForeColor = [System.Drawing.Color]::FromArgb(255,0,0,205)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 225
+$System_Drawing_Point.X = 655
 $System_Drawing_Point.Y = 13
 $FormatBlueButton.Location = $System_Drawing_Point
 $FormatBlueButton.Name = "FormatBlueButton"
@@ -409,7 +478,7 @@ $FormatGreenButton.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",
 $FormatGreenButton.ForeColor = [System.Drawing.Color]::FromArgb(255,0,128,0)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 195
+$System_Drawing_Point.X = 625
 $System_Drawing_Point.Y = 13
 $FormatGreenButton.Location = $System_Drawing_Point
 $FormatGreenButton.Name = "FormatGreenButton"
@@ -430,7 +499,7 @@ $FormatRedButton.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.
 $FormatRedButton.ForeColor = [System.Drawing.Color]::FromArgb(255,255,0,0)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 165
+$System_Drawing_Point.X = 595
 $System_Drawing_Point.Y = 13
 $FormatRedButton.Location = $System_Drawing_Point
 $FormatRedButton.Name = "FormatRedButton"
@@ -449,7 +518,7 @@ $form1.Controls.Add($FormatRedButton)
 $SaveButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 223
 $SaveButton.Location = $System_Drawing_Point
 $SaveButton.Name = "SaveButton"
@@ -468,7 +537,7 @@ $form1.Controls.Add($SaveButton)
 $AddLinkToExistPageButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 163
 $AddLinkToExistPageButton.Location = $System_Drawing_Point
 $AddLinkToExistPageButton.Name = "AddLinkToExistPageButton"
@@ -487,7 +556,7 @@ $form1.Controls.Add($AddLinkToExistPageButton)
 $SearchButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 133
 $SearchButton.Location = $System_Drawing_Point
 $SearchButton.Name = "SearchButton"
@@ -506,7 +575,7 @@ $form1.Controls.Add($SearchButton)
 $JumpPageButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 73
 $JumpPageButton.Location = $System_Drawing_Point
 $JumpPageButton.Name = "JumpPageButton"
@@ -525,7 +594,7 @@ $form1.Controls.Add($JumpPageButton)
 $GoToPageButton.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 641
+$System_Drawing_Point.X = 1071
 $System_Drawing_Point.Y = 43
 $GoToPageButton.Location = $System_Drawing_Point
 $GoToPageButton.Name = "GoToPageButton"
@@ -543,7 +612,7 @@ $form1.Controls.Add($GoToPageButton)
 $label1.DataBindings.DefaultDataSourceUpdateMode = 0
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 13
+$System_Drawing_Point.X = 443
 $System_Drawing_Point.Y = 730
 $label1.Location = $System_Drawing_Point
 $label1.Name = "label1"
@@ -558,7 +627,7 @@ $form1.Controls.Add($label1)
 
 $richTextBox1.DataBindings.DefaultDataSourceUpdateMode = 0
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 13
+$System_Drawing_Point.X = 443
 $System_Drawing_Point.Y = 43
 $richTextBox1.Location = $System_Drawing_Point
 $richTextBox1.Name = "richTextBox1"
@@ -577,7 +646,7 @@ $FormatCodeButton.DataBindings.DefaultDataSourceUpdateMode = 0
 $FormatCodeButton.Font = New-Object System.Drawing.Font("Lucida Console",8,0,3,204)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 103
+$System_Drawing_Point.X = 533
 $System_Drawing_Point.Y = 13
 $FormatCodeButton.Location = $System_Drawing_Point
 $FormatCodeButton.Name = "FormatCodeButton"
@@ -597,7 +666,7 @@ $FormatUnderlineButton.DataBindings.DefaultDataSourceUpdateMode = 0
 $FormatUnderlineButton.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.25,4,3,0)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 73
+$System_Drawing_Point.X = 503
 $System_Drawing_Point.Y = 13
 $FormatUnderlineButton.Location = $System_Drawing_Point
 $FormatUnderlineButton.Name = "FormatUnderlineButton"
@@ -617,7 +686,7 @@ $FormatItalicButton.DataBindings.DefaultDataSourceUpdateMode = 0
 $FormatItalicButton.Font = New-Object System.Drawing.Font("Courier New",8.25,2,3,204)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 43
+$System_Drawing_Point.X = 473
 $System_Drawing_Point.Y = 13
 $FormatItalicButton.Location = $System_Drawing_Point
 $FormatItalicButton.Name = "FormatItalicButton"
@@ -637,7 +706,7 @@ $FormatBoldButton.DataBindings.DefaultDataSourceUpdateMode = 0
 $FormatBoldButton.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.25,1,3,0)
 
 $System_Drawing_Point = New-Object System.Drawing.Point
-$System_Drawing_Point.X = 13
+$System_Drawing_Point.X = 443
 $System_Drawing_Point.Y = 13
 $FormatBoldButton.Location = $System_Drawing_Point
 $FormatBoldButton.Name = "FormatBoldButton"
