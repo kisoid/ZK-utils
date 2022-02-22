@@ -17,8 +17,15 @@ function Add-Node ($RootNode,$NodeName)
 
 function Get-NeighborLinks ($node)
 {
+    $nodefilepath = "$($script:workdirectory)\$($node).dcmp2"
+
+    if(-not (Test-Path -LiteralPath $nodefilepath))
+    {
+        return @()
+    }
+
     $tmp_richTextBox = New-Object System.Windows.Forms.RichTextBox
-    $tmp_richTextBox.LoadFile("$($script:workdirectory)\$($node).dcmp2")
+    $tmp_richTextBox.LoadFile($nodefilepath)
     
     $links = ($tmp_richTextBox.Lines | Where-Object {$_ -like '*linkto:*'} | ForEach-Object {$_.Split(':')[1]})
     $links2 = @()
