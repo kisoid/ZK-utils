@@ -36,7 +36,7 @@ foreach($node in $nodes)
     $curr_id++
 }
 
-$gml_str = "graph`r`n[`r`n`tdirected`t1`r`n"
+$gml_str = "graph`r`n[`r`n`tdirected`t0`r`n"
 $gml_str_children = New-Object System.Collections.Generic.List[System.Object]
 $gml_str_neibs = New-Object System.Collections.Generic.List[System.Object]
 
@@ -93,6 +93,11 @@ foreach($node in $nodes)
     foreach($link in $links)
     {
         if(-not $node2id[$link])
+        {
+            continue
+        }
+
+        if($node2id[$node.BaseName] -gt $node2id[$link])
         {
             continue
         }
