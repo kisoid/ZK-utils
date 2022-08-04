@@ -153,7 +153,38 @@ $ConsistencyCheckerButton_OnClick=
 $GitStatusButton_OnClick= 
 {
     Write-Host '----- Git status --------------------------------------------------'
-    Start-Process -FilePath $script:path2git -ArgumentList 'status' -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+    #Start-Process -FilePath $script:path2git -ArgumentList 'status' -Wait -WorkingDirectory $script:workfile.Directory.Parent.FullName -NoNewWindow
+
+    #https://stackoverflow.com/questions/8761888/capturing-standard-out-and-error-with-start-process/33652732#33652732
+
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = $script:path2git
+    $pinfo.WorkingDirectory = $script:workfile.Directory.Parent.FullName
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = 'status'
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+    $p.WaitForExit()
+    $stdout = $p.StandardOutput.ReadToEnd()
+    $stderr = $p.StandardError.ReadToEnd()
+    #Write-Host "stdout: $stdout"
+    #Write-Host "stderr: $stderr"
+    #Write-Host "exit code: " + $p.ExitCode
+
+    if(($stdout.Substring(0,14) -eq 'On branch main') -and
+       ($stdout.Substring(15,30) -eq 'Your branch is up to date with') -and
+       ($stdout.Substring(62,37) -eq 'nothing to commit, working tree clean'))
+    {
+        Write-Host 'OK!'
+    }
+    else
+    {
+        Write-Host "stdout: $stdout"
+    }
+
     Write-Host '-------------------------------------------------------------------'
 }
 
