@@ -57,7 +57,8 @@ foreach($node in $nodes)
     if($green -lt 0) {$green = 0}
     if($blue -lt 0) {$blue = 0}
 
-    $gml_color = '"#' + ('{0:X}{1:X}{2:X}' -f $red,$green,$blue) + '"'
+    #$gml_color = '"#' + ('{0:X}{1:X}{2:X}' -f $red,$green,$blue) + '"'
+    $gml_color = '"#0984b1"'
 
     $gml_str_children.Add("`t" + 'node' + "`r`n" + `
          "`t" + "[" + "`r`n" + `
@@ -69,6 +70,8 @@ foreach($node in $nodes)
          "`t`t" + "[" + "`r`n" + `
          "`t`t`t" + "x`t" + (Get-Random -Minimum 0 -Maximum 10000) + "`r`n" + `
          "`t`t`t" + "y`t" + (Get-Random -Minimum 0 -Maximum 10000) + "`r`n" + `
+         "`t`t`t" + "w`t" + ([math]::Pow($node.Length,0.5)) + "`r`n" + `
+         "`t`t`t" + "h`t" + ([math]::Pow($node.Length,0.5)) + "`r`n" + `
          "`t`t`t" + "fill`t" + $gml_color + "`r`n" + `
          "`t`t" + "]" + "`r`n" + `
          "`t" + "]" + "`r`n")
