@@ -27,6 +27,8 @@ function Run-MFBWalker ($startnode, $maxsteps)
 $nodes = Get-ChildItem -LiteralPath $input_dir -Recurse '*.dcmp2'
 #$nodes
 
+$now = Get-Date
+
 $curr_id = 1
 $node2id = @{}
 
@@ -48,17 +50,22 @@ foreach($node in $nodes)
     $richTextBox1 = New-Object System.Windows.Forms.RichTextBox
     $richTextBox1.LoadFile($node.FullName)
 
-    $meat = ($node.Length - 155)/7100.0
-    $red = [int](248 - (248 - 164)*$meat)
-    $green = [int](221 - (221 - 99)*$meat)
-    $blue = [int](177 - (177 - 18)*$meat)
+    #$intensity = ($node.Length - 155)/7100.0
+    $intensity = [math]::Log(($now - $node.LastWriteTime).TotalDays*2.25)*0.145 + 0.0001
+
+    if($intensity -lt 0) {$intensity = 0}
+    if($intensity -gt 1) {$intensity = 1}
+
+    $red = [int](18 + (255 - 18)*$intensity)
+    $green = [int](104 + (255 - 104)*$intensity)
+    $blue = [int](39 + (255 - 39)*$intensity)
 
     if($red -lt 0) {$red = 0}
     if($green -lt 0) {$green = 0}
     if($blue -lt 0) {$blue = 0}
 
-    #$gml_color = '"#' + ('{0:X}{1:X}{2:X}' -f $red,$green,$blue) + '"'
-    $gml_color = '"#0984b1"'
+    $gml_color = '"#' + ('{0:X}{1:X}{2:X}' -f $red,$green,$blue) + '"'
+    #$gml_color = '"#0984b1"'
 
     $gml_str_children.Add("`t" + 'node' + "`r`n" + `
          "`t" + "[" + "`r`n" + `
