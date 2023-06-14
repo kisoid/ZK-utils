@@ -100,6 +100,7 @@ function GenerateForm {
 #region Generated Form Objects
 $form1 = New-Object System.Windows.Forms.Form
 $treeView1 = New-Object System.Windows.Forms.TreeView
+$RecentButton = New-Object System.Windows.Forms.Button
 $ConsistencyCheckerButton = New-Object System.Windows.Forms.Button
 $GitPushButton = New-Object System.Windows.Forms.Button
 $GitPullButton = New-Object System.Windows.Forms.Button
@@ -141,6 +142,24 @@ $handler_treeView1_AfterSelect=
 $handler_treeView1_AfterExpand= 
 {
     #Write-Host "EXPAND!" $_.Node.Name
+}
+
+$RecentButton_OnClick= 
+{
+    $rcnt_ts = (get-date).AddHours(-4)
+    [void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
+    $request = [Microsoft.VisualBasic.Interaction]::InputBox("Введите временную отметку", "Недавние", $rcnt_ts.ToString("yyyy-MM-dd HH:mm"))
+    $rcnt_ts = [datetime]::parseexact($request, "yyyy-MM-dd HH:mm", $null)
+    #Write-Host $rcnt_ts
+
+    $rcnt_nodes = (Get-ChildItem -LiteralPath $script:workdirectory -Recurse '*.dcmp2' | Where-Object {$_.LastWriteTime -ge $rcnt_ts} | Sort-Object -Property LastWriteTime -Descending).BaseName
+    
+    $treeView1.Nodes.Clear()
+
+    foreach($rcnt_node in $rcnt_nodes)
+    {
+        Add-Node $treeView1 $rcnt_node | Out-Null
+    }
 }
 
 $ConsistencyCheckerButton_OnClick= 
@@ -388,11 +407,30 @@ $System_Drawing_Size = New-Object System.Drawing.Size
 $System_Drawing_Size.Height = 680
 $System_Drawing_Size.Width = 424
 $treeView1.Size = $System_Drawing_Size
-$treeView1.TabIndex = 19
+$treeView1.TabIndex = 20
 $treeView1.add_AfterSelect($handler_treeView1_AfterSelect)
 $treeView1.add_AfterExpand($handler_treeView1_AfterExpand)
 
 $form1.Controls.Add($treeView1)
+
+
+$RecentButton.DataBindings.DefaultDataSourceUpdateMode = 0
+
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 1071
+$System_Drawing_Point.Y = 432
+$RecentButton.Location = $System_Drawing_Point
+$RecentButton.Name = "RecentButton"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 23
+$System_Drawing_Size.Width = 109
+$RecentButton.Size = $System_Drawing_Size
+$RecentButton.TabIndex = 19
+$RecentButton.Text = "Recent"
+$RecentButton.UseVisualStyleBackColor = $True
+$RecentButton.add_Click($RecentButton_OnClick)
+
+$form1.Controls.Add($RecentButton)
 
 
 $ConsistencyCheckerButton.DataBindings.DefaultDataSourceUpdateMode = 0
