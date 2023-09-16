@@ -84,6 +84,59 @@ function Search-Word ($request)
     return $result
 }
 
+
+function Review-Next
+{
+    $now = get-date
+
+    ### DEBUG
+    #$now = $now.AddDays(3)
+    #Write-Host $now
+    ### DEBUG
+
+    $results = New-Object System.Collections.Generic.List[System.Object]
+
+    $nodes = Get-ChildItem -LiteralPath $script:workdirectory -Recurse '*.dcmp2'
+
+    $tmp_richTextBox = New-Object System.Windows.Forms.RichTextBox
+
+    foreach($node in $nodes)
+    {
+        $tmp_richTextBox.LoadFile($node.FullName)
+        $matchstrings = ($tmp_richTextBox.Lines | Where-Object {$_ -like '#review:*'})
+
+        $cand_ts = $node.LastWriteTime
+
+        foreach($mstr in $matchstrings)
+        {
+            $tmp_arr = $mstr.Split(':')
+            $tmp_arr = ($tmp_arr[1]).Split(' ')
+            $cand_rev = [int]($tmp_arr[0])
+            
+            if(($now - $cand_ts).TotalDays -ge $cand_rev)
+            {
+                $results.Add([pscustomobject]@{
+                'NodeName' = $node.BaseName
+                'RevDays' = $cand_rev
+                'Updated' = $cand_ts
+                })
+            }
+        }
+    }
+
+    if($results.Count -eq 0)
+    {
+        Write-Host 'Нет больше заметок для ревью'
+        return
+    }
+
+    $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
+    $target = "$($script:workdirectory)\$($selected_link).dcmp2"
+    Write-Host "Go for review $target"
+    GoToPage $target
+}
+
+
 #Generated Form Function
 function GenerateForm {
 ########################################################################
@@ -100,6 +153,7 @@ function GenerateForm {
 #region Generated Form Objects
 $form1 = New-Object System.Windows.Forms.Form
 $treeView1 = New-Object System.Windows.Forms.TreeView
+$ReviewButton = New-Object System.Windows.Forms.Button
 $RecentButton = New-Object System.Windows.Forms.Button
 $ConsistencyCheckerButton = New-Object System.Windows.Forms.Button
 $GitPushButton = New-Object System.Windows.Forms.Button
@@ -142,6 +196,13 @@ $handler_treeView1_AfterSelect=
 $handler_treeView1_AfterExpand= 
 {
     #Write-Host "EXPAND!" $_.Node.Name
+}
+
+$ReviewButton_OnClick= 
+{
+    Write-Host '----- Review ------------------------------------------------------'
+    Review-Next
+    Write-Host '-------------------------------------------------------------------'
 }
 
 $RecentButton_OnClick= 
@@ -407,11 +468,29 @@ $System_Drawing_Size = New-Object System.Drawing.Size
 $System_Drawing_Size.Height = 680
 $System_Drawing_Size.Width = 424
 $treeView1.Size = $System_Drawing_Size
-$treeView1.TabIndex = 20
+$treeView1.TabIndex = 21
 $treeView1.add_AfterSelect($handler_treeView1_AfterSelect)
 $treeView1.add_AfterExpand($handler_treeView1_AfterExpand)
 
 $form1.Controls.Add($treeView1)
+
+
+$ReviewButton.DataBindings.DefaultDataSourceUpdateMode = 0
+$System_Drawing_Point = New-Object System.Drawing.Point
+$System_Drawing_Point.X = 1071
+$System_Drawing_Point.Y = 462
+$ReviewButton.Location = $System_Drawing_Point
+$ReviewButton.Name = "ReviewButton"
+$System_Drawing_Size = New-Object System.Drawing.Size
+$System_Drawing_Size.Height = 23
+$System_Drawing_Size.Width = 109
+$ReviewButton.Size = $System_Drawing_Size
+$ReviewButton.TabIndex = 20
+$ReviewButton.Text = "Review"
+$ReviewButton.UseVisualStyleBackColor = $True
+$ReviewButton.add_Click($ReviewButton_OnClick)
+
+$form1.Controls.Add($ReviewButton)
 
 
 $RecentButton.DataBindings.DefaultDataSourceUpdateMode = 0
