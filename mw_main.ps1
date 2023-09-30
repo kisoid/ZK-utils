@@ -87,7 +87,8 @@ function Search-Word ($request)
 
 function Review-Next
 {
-    $now = get-date
+    ### $now = get-date
+    $magic_number = (Get-Date).Ticks
 
     ### DEBUG
     #$now = $now.AddDays(3)
@@ -113,7 +114,8 @@ function Review-Next
             $tmp_arr = ($tmp_arr[1]).Split(' ')
             $cand_rev = [int]($tmp_arr[0])
             
-            if(($now - $cand_ts).TotalDays -ge $cand_rev)
+            ### if(($now - $cand_ts).TotalDays -ge $cand_rev)
+            if(($magic_number % $cand_rev) -eq 0)
             {
                 $results.Add([pscustomobject]@{
                 'NodeName' = $node.BaseName
@@ -126,11 +128,15 @@ function Review-Next
 
     if($results.Count -eq 0)
     {
-        Write-Host 'Нет больше заметок для ревью'
+        Write-Host "Попробуй ещё разок ( $magic_number )"
         return
     }
 
-    $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
+    Write-Host "Конкуренция:" $results.Count
+
+    ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
+    $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
+    
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"
     GoToPage $target
