@@ -87,13 +87,7 @@ function Search-Word ($request)
 
 function Review-Next
 {
-    ### $now = get-date
-    $magic_number = (Get-Date).Ticks
-
-    ### DEBUG
-    #$now = $now.AddDays(3)
-    #Write-Host $now
-    ### DEBUG
+    $magic_number = ((Get-Date).Ticks % 20) + 1
 
     $results = New-Object System.Collections.Generic.List[System.Object]
 
@@ -113,9 +107,13 @@ function Review-Next
             $tmp_arr = $mstr.Split(':')
             $tmp_arr = ($tmp_arr[1]).Split(' ')
             $cand_rev = [int]($tmp_arr[0])
+
+            if($cand_rev -gt 20)
+            {
+                $cand_rev = 20
+            }
             
-            ### if(($now - $cand_ts).TotalDays -ge $cand_rev)
-            if(($magic_number % $cand_rev) -eq 0)
+            if($cand_rev -le $magic_number)
             {
                 $results.Add([pscustomobject]@{
                 'NodeName' = $node.BaseName
