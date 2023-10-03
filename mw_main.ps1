@@ -413,6 +413,7 @@ $GoToPageButton_OnClick=
         Copy-Item -LiteralPath "$($script:workdirectory)\template_blank.dcmp2" -Destination $target
         GoToPage $target
         $richTextBox1.AppendText("$selected_link")
+        $richTextBox1.AppendText("`n#review:1")
         $richTextBox1.AppendText("`n`nОсновной текст")
         $richTextBox1.AppendText("`n`nНазад - linkto:$prev")
         $richTextBox1.SaveFile($target)
