@@ -4,6 +4,8 @@ $workfilearg = $script:args
 
 Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
+$antibonus = @{}
+
 function Add-Node ($RootNode,$NodeName)
 {
     $newNode = new-object System.Windows.Forms.TreeNode
@@ -87,7 +89,8 @@ function Search-Word ($request)
 
 function Review-Next
 {
-    $magic_number = ((Get-Date).Ticks % 20) + 1
+    $magic_number = ((Get-Date).Ticks % 100000)/99999
+    Write-Host '.' # $magic_number
 
     $results = New-Object System.Collections.Generic.List[System.Object]
 
@@ -106,14 +109,9 @@ function Review-Next
         {
             $tmp_arr = $mstr.Split(':')
             $tmp_arr = ($tmp_arr[1]).Split(' ')
-            $cand_rev = [int]($tmp_arr[0])
-
-            if($cand_rev -gt 20)
-            {
-                $cand_rev = 20
-            }
+            $cand_rev = $script:antibonus[$node.BaseName]*0.33 + [int]($tmp_arr[0])
             
-            if($cand_rev -le $magic_number)
+            if((1/$cand_rev) -ge $magic_number)
             {
                 $results.Add([pscustomobject]@{
                 'NodeName' = $node.BaseName
@@ -126,15 +124,19 @@ function Review-Next
 
     if($results.Count -eq 0)
     {
-        Write-Host "Попробуй ещё разок ( $magic_number )"
+        #Write-Host "Попробуй ещё разок ( $magic_number )"
+        #Start-Sleep -Milliseconds 123
+        Review-Next
         return
     }
 
-    Write-Host "Конкуренция:" $results.Count
+    Write-Host "Конкуренция: $($results.Count) ($magic_number)"
 
     ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
     $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
     
+    $script:antibonus[$selected_link]++
+
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"
     GoToPage $target
