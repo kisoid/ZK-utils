@@ -90,7 +90,6 @@ function Search-Word ($request)
 function Review-Next
 {
     $magic_number = ((Get-Date).Ticks % 100000)/99999
-    Write-Host '.' # $magic_number
 
     $results = New-Object System.Collections.Generic.List[System.Object]
 
@@ -126,6 +125,7 @@ function Review-Next
     {
         #Write-Host "Попробуй ещё разок ( $magic_number )"
         #Start-Sleep -Milliseconds 123
+        Write-Host $magic_number
         Review-Next
         return
     }
