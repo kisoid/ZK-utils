@@ -5,6 +5,8 @@ $workfilearg = $script:args
 Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
 $antibonus = @{}
+$mag_num_top_limit_max = 100000
+$mag_num_top_limit = $mag_num_top_limit_max
 
 function Add-Node ($RootNode,$NodeName)
 {
@@ -89,7 +91,7 @@ function Search-Word ($request)
 
 function Review-Next
 {
-    $magic_number = ((Get-Date).Ticks % 100000)/99999
+    $magic_number = ((Get-Date).Ticks % $script:mag_num_top_limit)/($script:mag_num_top_limit_max - 1)
 
     $results = New-Object System.Collections.Generic.List[System.Object]
 
@@ -108,7 +110,7 @@ function Review-Next
         {
             $tmp_arr = $mstr.Split(':')
             $tmp_arr = ($tmp_arr[1]).Split(' ')
-            $cand_rev = $script:antibonus[$node.BaseName]*0.33 + [int]($tmp_arr[0])
+            $cand_rev = $script:antibonus[$node.BaseName]*0.7 + [int]($tmp_arr[0])
             
             if((1/$cand_rev) -ge $magic_number)
             {
@@ -130,12 +132,13 @@ function Review-Next
         return
     }
 
-    Write-Host "Конкуренция: $($results.Count) ($magic_number)"
+    Write-Host "Конкуренция: $($results.Count) ($magic_number / $($script:mag_num_top_limit))"
 
     ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
     $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
     
     $script:antibonus[$selected_link]++
+    $script:mag_num_top_limit  = [int]($script:mag_num_top_limit*0.985)
 
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"

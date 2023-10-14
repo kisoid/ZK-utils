@@ -66,5 +66,5 @@ foreach($Aid in $neibs.Keys)
     }
 }
 
-Write-Host "Ошибки: $kosyak_count"
+Write-Host "Ошибки:         $kosyak_count"
 Write-Host "Предупреждения: $warn_count"
