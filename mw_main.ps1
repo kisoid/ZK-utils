@@ -5,8 +5,7 @@ $workfilearg = $script:args
 Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
 $antibonus = @{}
-$mag_num_top_limit_max = 100000
-$mag_num_top_limit = $mag_num_top_limit_max
+
 
 function Add-Node ($RootNode,$NodeName)
 {
@@ -91,8 +90,6 @@ function Search-Word ($request)
 
 function Review-Next
 {
-    $magic_number = ((Get-Date).Ticks % $script:mag_num_top_limit)/($script:mag_num_top_limit_max - 1)
-
     $results = New-Object System.Collections.Generic.List[System.Object]
 
     $nodes = Get-ChildItem -LiteralPath $script:workdirectory -Recurse '*.dcmp2'
@@ -110,14 +107,18 @@ function Review-Next
         {
             $tmp_arr = $mstr.Split(':')
             $tmp_arr = ($tmp_arr[1]).Split(' ')
-            $cand_rev = $script:antibonus[$node.BaseName]*0.7 + [int]($tmp_arr[0])
+            $cand_rev = [int]($tmp_arr[0])
+
+            $degree = 100/($script:antibonus[$node.BaseName] + $cand_rev)
             
-            if((1/$cand_rev) -ge $magic_number)
+            for($dd = 1; $dd -le $degree; $dd++)
             {
                 $results.Add([pscustomobject]@{
                 'NodeName' = $node.BaseName
                 'RevDays' = $cand_rev
                 'Updated' = $cand_ts
+                'instance' = $dd
+                'degree' = $degree
                 })
             }
         }
@@ -125,24 +126,23 @@ function Review-Next
 
     if($results.Count -eq 0)
     {
-        #Write-Host "Попробуй ещё разок ( $magic_number )"
-        #Start-Sleep -Milliseconds 123
-        Write-Host $magic_number
-        Review-Next
+        Write-Host "Нет больше заметок на ревью"
         return
     }
 
-    Write-Host "Конкуренция: $($results.Count) ($magic_number / $($script:mag_num_top_limit))"
+    Write-Host "Конкуренция: $($results.Count)"
 
     ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
     $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
     
-    $script:antibonus[$selected_link]++
-    $script:mag_num_top_limit  = [int]($script:mag_num_top_limit*0.985)
+    $script:antibonus[$selected_link] = ($script:antibonus[$selected_link] + 0.72)*1.4
 
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"
     GoToPage $target
+
+    ## debug
+    # $results.GetEnumerator() | Out-GridView
 }
 
 
