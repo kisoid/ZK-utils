@@ -5,7 +5,7 @@ $workfilearg = $script:args
 Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*'} | Invoke-Expression
 
 $antibonus = @{}
-
+$review_ts = @{}
 
 function Add-Node ($RootNode,$NodeName)
 {
@@ -109,7 +109,17 @@ function Review-Next
             $tmp_arr = ($tmp_arr[1]).Split(' ')
             $cand_rev = [int]($tmp_arr[0])
 
-            $degree = 100/($script:antibonus[$node.BaseName] + $cand_rev)
+            $degree = 100/$cand_rev
+
+            if(-not $script:review_ts.ContainsKey($node.BaseName))
+            {
+                $script:review_ts[$node.BaseName] = $cand_ts
+            }
+
+            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*10)
+            {
+                continue
+            }
             
             for($dd = 1; $dd -le $degree; $dd++)
             {
@@ -119,6 +129,7 @@ function Review-Next
                 'Updated' = $cand_ts
                 'instance' = $dd
                 'degree' = $degree
+                'rev_ts' = $script:review_ts[$node.BaseName]
                 })
             }
         }
@@ -135,7 +146,8 @@ function Review-Next
     ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
     $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
     
-    $script:antibonus[$selected_link] = ($script:antibonus[$selected_link] + 0.72)*1.4
+    $script:antibonus[$selected_link]++
+    $script:review_ts[$selected_link] = (Get-Date)
 
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"
