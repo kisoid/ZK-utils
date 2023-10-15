@@ -6,6 +6,7 @@ Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*
 
 $antibonus = @{}
 $review_ts = @{}
+$d_ratio = 100
 
 function Add-Node ($RootNode,$NodeName)
 {
@@ -109,14 +110,14 @@ function Review-Next
             $tmp_arr = ($tmp_arr[1]).Split(' ')
             $cand_rev = [int]($tmp_arr[0])
 
-            $degree = 250/([math]::Pow($cand_rev,1.7))
+            $degree = $script:d_ratio/([math]::Pow($cand_rev,1.7))
 
             if(-not $script:review_ts.ContainsKey($node.BaseName))
             {
                 $script:review_ts[$node.BaseName] = $cand_ts
             }
 
-            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*3*$cand_rev)
+            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*5*$cand_rev)
             {
                 continue
             }
@@ -141,13 +142,19 @@ function Review-Next
         return
     }
 
-    Write-Host "Конкуренция: $($results.Count)"
+    Write-Host "Конкуренция: $($results.Count) d_ratio: $($script:d_ratio)"
 
     ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
     $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
     
     $script:antibonus[$selected_link]++
     $script:review_ts[$selected_link] = (Get-Date)
+
+    $script:d_ratio = [int]((3000/$results.Count)*$script:d_ratio)
+    if($script:d_ratio -gt 2000)
+    {
+        $script:d_ratio = 2000
+    }
 
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"
