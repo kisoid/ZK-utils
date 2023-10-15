@@ -109,19 +109,19 @@ function Review-Next
             $tmp_arr = ($tmp_arr[1]).Split(' ')
             $cand_rev = [int]($tmp_arr[0])
 
-            $degree = 100/$cand_rev
+            $degree = 250/([math]::Pow($cand_rev,1.7))
 
             if(-not $script:review_ts.ContainsKey($node.BaseName))
             {
                 $script:review_ts[$node.BaseName] = $cand_ts
             }
 
-            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*10)
+            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*3*$cand_rev)
             {
                 continue
             }
             
-            for($dd = 1; $dd -le $degree; $dd++)
+            for($dd = 0; $dd -lt $degree; $dd++)
             {
                 $results.Add([pscustomobject]@{
                 'NodeName' = $node.BaseName
