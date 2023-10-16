@@ -6,7 +6,7 @@ Get-Content -LiteralPath "$PSScriptRoot\config.txt" | Where-Object {$_ -like '$*
 
 $antibonus = @{}
 $review_ts = @{}
-$d_ratio = 100
+
 
 function Add-Node ($RootNode,$NodeName)
 {
@@ -110,29 +110,27 @@ function Review-Next
             $tmp_arr = ($tmp_arr[1]).Split(' ')
             $cand_rev = [int]($tmp_arr[0])
 
-            $degree = $script:d_ratio/([math]::Pow($cand_rev,1.7))
-
             if(-not $script:review_ts.ContainsKey($node.BaseName))
             {
                 $script:review_ts[$node.BaseName] = $cand_ts
             }
 
-            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*5*$cand_rev)
+            if(((Get-Date) - $cand_ts).TotalDays -lt $cand_rev)
+            {
+                continue
+            }
+
+            if(((Get-Date) - $script:review_ts[$node.BaseName]).TotalMinutes -lt $script:antibonus[$node.BaseName]*10*$cand_rev)
             {
                 continue
             }
             
-            for($dd = 0; $dd -lt $degree; $dd++)
-            {
-                $results.Add([pscustomobject]@{
+            $results.Add([pscustomobject]@{
                 'NodeName' = $node.BaseName
-                'RevDays' = $cand_rev
+                'Prio' = $cand_rev
                 'Updated' = $cand_ts
-                'instance' = $dd
-                'degree' = $degree
                 'rev_ts' = $script:review_ts[$node.BaseName]
-                })
-            }
+            })
         }
     }
 
@@ -142,19 +140,13 @@ function Review-Next
         return
     }
 
-    Write-Host "Конкуренция: $($results.Count) d_ratio: $($script:d_ratio)"
+    Write-Host "Конкуренция: $($results.Count)"
 
     ### $selected_link = ($results.GetEnumerator() | Sort-Object -Property Updated | Out-GridView -OutputMode Single).NodeName
-    $selected_link = ($results.GetEnumerator() | Get-Random).NodeName
+    $selected_link = ($results.GetEnumerator() | Sort-Object -Property Prio | Select-Object -First 20 | Get-Random).NodeName
     
     $script:antibonus[$selected_link]++
     $script:review_ts[$selected_link] = (Get-Date)
-
-    $script:d_ratio = [int]((3000/$results.Count)*$script:d_ratio)
-    if($script:d_ratio -gt 2000)
-    {
-        $script:d_ratio = 2000
-    }
 
     $target = "$($script:workdirectory)\$($selected_link).dcmp2"
     Write-Host "Go for review $target"
@@ -306,7 +298,7 @@ $GitPullButton_OnClick=
 $GitPushButton_OnClick= 
 {
     [void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
-    $commit_message = [Microsoft.VisualBasic.Interaction]::InputBox("Введите комментарий к коммиту", "Коммит")
+    $commit_message = [Microsoft.VisualBasic.Interaction]::InputBox("Введите комментарий к коммиту", "Коммит", (Get-Date).ToString("UPD yyyy-MM-dd HH-mm"))
 
     Write-Host '----- Add, commit & push ------------------------------------------'
     Write-Host ">> git add -A`n`n"
